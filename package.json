@@ -1,0 +1,26 @@
+{
+  "name": "shadow-mysql",
+  "version": "1.0.0",
+  "description": "Mysql interface package",
+  "main": "index.js",
+  "dependencies": {
+    "mysql": "^2.11.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shadow88sky/shadow-mysql.git"
+  },
+  "keywords": [
+    "shadow-mysql"
+  ],
+  "author": "x.c",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shadow88sky/shadow-mysql/issues"
+  },
+  "homepage": "https://github.com/shadow88sky/shadow-mysql#readme"
+}
