@@ -251,3 +251,4 @@ exports.makeSQLInsert = makeSQLInsert;
 exports.makeSQLSelect = makeSQLSelect;
 exports.makeSQLUpdate = makeSQLUpdate;
 exports.makeSQLDelete = makeSQLDelete;
+exports.escape = mysql.escape;

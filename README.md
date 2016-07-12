@@ -101,3 +101,6 @@ console.log(sql);//update hs_t set name = 'xc' where id = 3;
 var sql = mysql.makeSQLDelete('hs_t',{name:'xc'});
 console.log(sql);//delete from hs_t where name = 'xc';
 ```
+
+###防sql注入  
+如果自己写sql时，所有参数都需要用mysql.escape(param)过滤下，防止sql注入
