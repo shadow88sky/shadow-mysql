@@ -220,6 +220,9 @@ var convertObjectToSQLStringArray = function (obj, columns) {
     for (var i = 0; i < columns.length; i++) {
         for (var key in obj) {
             if (key == columns[i]) {
+                if (typeof obj[key] == 'object') {
+                    obj[key] = JSON.stringify(obj[key]);
+                }
                 arrayObj.push(mysql.escape(obj[key]));
             }
         }
