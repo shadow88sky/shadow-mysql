@@ -253,6 +253,9 @@ var convertObjectToSQLStringKV = function (obj, delimiterOP, delimiterEND) {
     var end = delimiterEND.trim();
     if (end.indexOf("and") >= 0) end = " " + delimiterEND.trim() + " ";
     for (var key in obj) {
+        if (typeof obj[key] == 'object') {
+            obj[key] = JSON.stringify(obj[key]);
+        }
         res += key + delimiterOP + mysql.escape(obj[key]) + end;
     }
     if (res.indexOf("and") > 0) return res.substr(0, res.length - 4);
