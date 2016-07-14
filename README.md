@@ -3,6 +3,7 @@
 * 添加了makeSQL,makeSQLSelect等简单方法。
 * 对conn没有正常release会打印日志。
 * 对于一个conn的事务是否开启多个做了错误判断。
+* 对于query,getConnection,beginTransaction,commit提供了promise方法，即在方法名后加Async（例如queryAsync）
 
 ##安装  
 npm install shadow-mysql
