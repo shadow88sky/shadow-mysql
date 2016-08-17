@@ -1,5 +1,5 @@
 'use strict'
-var mysql = require('mysql');
+const mysql = require('mysql');
 
 /**
  * define class  
@@ -25,7 +25,7 @@ class Pool {
     query(sql, cb) {
         if (!!!this._pool) return console.error('pool is not exists');
         let tick = new Date();
-        this._pool.query(sql, (err, rows, fields) => {
+        return this._pool.query(sql, (err, rows, fields) => {
             let now = new Date();
             let timediff = now.getTime() - tick.getTime();
             if (err) {
@@ -35,26 +35,6 @@ class Pool {
             }
             cb(err, rows, fields);
         });
-    }
-
-    //promise
-    queryAsync(sql) {
-        let self = this;
-        return new Promise((resolve, reject) => {
-            if (!!!self._pool) return reject('pool is not exists');
-            let tick = new Date();
-            self._pool.query(sql, (err, rows, fields) => {
-                let now = new Date();
-                let timediff = now.getTime() - tick.getTime();
-                if (err) {
-                    console.error(`[MySQL]Query error,used time:${timediff} ms,error=${err},sql=${sql}`);
-                    reject(err);
-                } else {
-                    console.log(`[MySQL]Query success,used time:${timediff} ms,sql=${sql}`);
-                    resolve(rows);
-                }
-            });
-        })
     }
 
     /**
@@ -72,23 +52,6 @@ class Pool {
             conn._timeout = setTimeout(releaseError, 60000);
             cb(err, conn);
         });
-    }
-
-    getConnectionAsync(name) {
-        let self = this;
-        return new Promise((resolve, reject) => {
-            if (!!!self._pool) return reject('pool is not exists');
-            self._pool.getConnection((err, connection) => {
-                let conn = new Connection(connection);
-                function releaseError() {
-                    console.warn(`connection ${name} release timeout!!!`);
-                }
-                //1分钟仍没关闭句柄，则提示释放链接错误;
-                conn._timeout = setTimeout(releaseError, 60000);
-                if (err) return reject(err);
-                resolve(conn);
-            });
-        })
     }
 
     //pool.end
@@ -114,10 +77,10 @@ class Connection {
     //connection.query
     query(sql, cb) {
         if (!!!this._conn) return console.error('connection is not exists');
-        var tick = new Date();
-        this._conn.query(sql, function (err, results) {
-            var now = new Date();
-            var timediff = now.getTime() - tick.getTime();
+        let tick = new Date();
+        return this._conn.query(sql, function (err, results) {
+            let now = new Date();
+            let timediff = now.getTime() - tick.getTime();
             if (err) {
                 console.error(`[MySQL]Query error,used time:${timediff} ms,error=${err},sql=${sql}`);
             } else {
@@ -125,26 +88,6 @@ class Connection {
             }
             cb(err, results);
         });
-    }
-
-    //promise
-    queryAsync(sql) {
-        let self = this;
-        return new Promise((resolve, reject) => {
-            if (!!!self._conn) return reject('connection is not exists');
-            let tick = new Date();
-            self._conn.query(sql, (err, results) => {
-                let now = new Date();
-                let timediff = now.getTime() - tick.getTime();
-                if (err) {
-                    console.error(`[MySQL]Query error,used time:${timediff} ms,error=${err},sql=${sql}`);
-                    reject(err);
-                } else {
-                    console.log(`[MySQL]Query success,used time:${timediff} ms,sql=${sql}`);
-                    resolve(results);
-                }
-            });
-        })
     }
 
     //connection.release
@@ -157,25 +100,12 @@ class Connection {
     //beginTransaction
     beginTransaction(cb) {
         if (!!!this._conn) return console.error('connection is not exists');
-        var self = this;
+        let self = this;
         this._conn.beginTransaction(function (err) {
             if (err) return cb(err);
             if (self._transCount > 0) return cb('Has Opened A Transaction!');
             self._transCount++;
             cb(null);
-        })
-    }
-
-    beginTransactionAsync() {
-        let self = this;
-        return new Promise((resolve, reject) => {
-            if (!!!self._conn) return reject('connection is not exists');
-            self._conn.beginTransaction(function (err) {
-                if (err) return reject(err);
-                if (self._transCount > 0) return reject('Has Opened A Transaction!');
-                self._transCount++;
-                resolve();
-            })
         })
     }
 
@@ -195,18 +125,6 @@ class Connection {
             cb(null);
         })
     }
-
-    commitAsync() {
-        let self = this;
-        return new Promise((resolve, reject) => {
-            if (self._transCount == 0) return reject('Please open transaction first!');
-            self._transCount--;
-            self._conn.commit(function (err) {
-                if (err) return reject(err);
-                resolve();
-            })
-        })
-    }
 }
 
 /***
@@ -216,13 +134,10 @@ class Connection {
  */
 var convertObjectToSQLStringArray = function (obj, columns) {
     // TODO:转换JSON对象为按照给定列排序的字符串(用于Insert)
-    var arrayObj = new Array();
-    for (var i = 0; i < columns.length; i++) {
-        for (var key in obj) {
+    let arrayObj = new Array();
+    for (let i = 0; i < columns.length; i++) {
+        for (let key in obj) {
             if (key == columns[i]) {
-                if (typeof obj[key] == 'object') {
-                    obj[key] = JSON.stringify(obj[key]);
-                }
                 arrayObj.push(mysql.escape(obj[key]));
             }
         }
@@ -234,9 +149,9 @@ var convertObjectToSQLStringArray = function (obj, columns) {
  * create sql
  */
 function makeSQL(sql, options) {
-    for (var k in options) {
+    for (let k in options) {
         if (typeof options[k] != 'function') {
-            var reg = new RegExp("@" + k + "@", "g");
+            let reg = new RegExp("@" + k + "@", "g");
             if (typeof options[k] == 'string' && options[k].substr(options[k].length - 1, 1) == '$') {
                 options[k] += '$';
             }
@@ -249,13 +164,10 @@ function makeSQL(sql, options) {
 // object转字符串
 var convertObjectToSQLStringKV = function (obj, delimiterOP, delimiterEND) {
     // TODO:转换JSON对象为'key[=]val[,]'形式,(用于Where,Update)
-    var res = '';
-    var end = delimiterEND.trim();
+    let res = '';
+    let end = delimiterEND.trim();
     if (end.indexOf("and") >= 0) end = " " + delimiterEND.trim() + " ";
-    for (var key in obj) {
-        if (typeof obj[key] == 'object') {
-            obj[key] = JSON.stringify(obj[key]);
-        }
+    for (let key in obj) {
         res += key + delimiterOP + mysql.escape(obj[key]) + end;
     }
     if (res.indexOf("and") > 0) return res.substr(0, res.length - 4);
@@ -263,26 +175,63 @@ var convertObjectToSQLStringKV = function (obj, delimiterOP, delimiterEND) {
 
 }
 
+// 条件obj转字符串
+var conditionToSQLString = function (condition) {
+    let sqlCondition = '';
+    if (condition) {
+        console.assert(typeof condition == 'object', 'condition is not object!!!');
+        for (let key in condition) {
+            for (let lkey in condition[key]) {
+                switch (lkey) {
+                    //小于
+                    case 'lt':
+                        sqlCondition += ' AND ' + key + ' < ' + mysql.escape(condition[key][lkey]);
+                        break;
+                    //大于
+                    case 'gt':
+                        sqlCondition += ' AND ' + key + ' > ' + mysql.escape(condition[key][lkey]);
+                        break;
+                    //like
+                    case 'like':
+                        sqlCondition += ' AND ' + key + " like '%" + mysql.escape(condition[key][lkey]).replace(/'/g, '') + "%'";
+                        break;
+                    //>=
+                    case 'gte':
+                        sqlCondition += ' AND ' + key + ' >= ' + mysql.escape(condition[key][lkey]);
+                        break;
+                    //<=
+                    case 'lte':
+                        sqlCondition += ' AND ' + key + ' <= ' + mysql.escape(condition[key][lkey]);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+    }
+    return sqlCondition;
+}
+
 // create sql:Insert
 function makeSQLInsert(table, items) {
-    var sql = "INSERT INTO " + mysql.escapeId(table) + " (";
-    var values = ") VALUES ";
-    var valueString = '';
-    var colarray = [];
+    let sql = "INSERT INTO " + mysql.escapeId(table) + " (";
+    let values = ") VALUES ";
+    let valueString = '';
+    let colarray = [];
     if (items instanceof (Array)) {
         // 多行插入模式
-        for (var key in items[0]) {
+        for (let key in items[0]) {
             colarray.push(key);
         }
-        for (var i = 0; i < items.length; i++) {
-            var value = convertObjectToSQLStringArray(items[i], colarray).join(',');
+        for (let i = 0; i < items.length; i++) {
+            let value = convertObjectToSQLStringArray(items[i], colarray).join(',');
             valueString += '(' + value + '),';
         }
         sql += colarray.join(',') + values + valueString.substr(0, valueString.length - 1) + ";";
     }
     else {
         // 单行插入模式
-        for (var key in items) {
+        for (let key in items) {
             colarray.push(key);
         }
         valueString += convertObjectToSQLStringArray(items, colarray).join(',');
@@ -298,38 +247,37 @@ function makeSQLInsert(table, items) {
  * @param where
  * @returns {string}
  */
-function makeSQLUpdate(table, items, where) {
-    var sql = "UPDATE " + mysql.escapeId(table) + " SET " + convertObjectToSQLStringKV(items, '=', ',');
+function makeSQLUpdate(table, items, where, condition) {
+    let sql = "UPDATE " + mysql.escapeId(table) + " SET " + convertObjectToSQLStringKV(items, '=', ',');
     if (where) {
         sql += ' WHERE ' + convertObjectToSQLStringKV(where, '=', 'and');
     }
+    sql += conditionToSQLString(condition);
     return sql;
 }
 
 // 创建SQL语句:Select
-function makeSQLSelect(table, columns, where) {
-    var col = '';
+function makeSQLSelect(table, columns, where, condition) {
+    let col = '';
     if (columns instanceof (Array)) {
         col = columns.join(',');
-    } else {
-        if (sc.assert(typeof columns != 'string' || !columns, columns)) {
-            col = columns;
-        }
     }
-    var sql = "SELECT " + col + " FROM " + mysql.escapeId(table);
+    let sql = "SELECT " + col + " FROM " + mysql.escapeId(table) + " WHERE 1=1 ";
     if (where) {
-        sql += ' WHERE ' + convertObjectToSQLStringKV(where, '=', 'and');
+        sql += " AND " + convertObjectToSQLStringKV(where, '=', 'and');
     }
+    sql += conditionToSQLString(condition);
     return sql;
 }
 
 // 创建SQL语句:Delete
-function makeSQLDelete(table, where) {
+function makeSQLDelete(table, where, condition) {
     console.assert(typeof table == 'string', table);
-    var sql = "DELETE FROM " + mysql.escapeId(table)
+    let sql = "DELETE FROM " + mysql.escapeId(table)
     if (where) {
         sql += ' WHERE ' + convertObjectToSQLStringKV(where, '=', 'and');
     }
+    sql += conditionToSQLString(condition);
     return sql;
 }
 

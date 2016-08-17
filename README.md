@@ -86,6 +86,10 @@ sql = mysql.makeSQL(sql,{id:2});
 ```javascript
 var sql = mysql.makeSQLSelect('hs_t',['id','name'],{id:3});
 console.log(sql); //select id,name from hs_t where id = 3;
+//makeSQLSelect 第4个参数为condition(object),代表除了=以外的条件查询
+//暂时支持 lt:小于 gt:大于 lte:小于等于 gte:大于等于 like:模糊查询
+var sql = mysql.makeSQLSelect('teams', ['*'], { id: 2 }, { a: { lt: 5, gt: 3 }, b: { like: 'tt' }, c: { lte: 2, gte: 6 } });
+console.log(sql); //SELECT * FROM `teams` WHERE 1=1  AND id=2  AND a < 5 AND a > 3 AND b like '%tt%' AND c <= 2 AND c >= 6
 ```
 * makeSQLInsert
 ```javascript
@@ -96,11 +100,13 @@ console.log(sql);//insert into hs_t(id,name) values (3,'xc');
 ```javascript
 var sql = mysql.makeSQLUpdate('hs_t',{name:'xc'},{id:3});
 console.log(sql);//update hs_t set name = 'xc' where id = 3;
+//第4个参数同makeSQLSelect
 ```
 * makeSQLDelete
 ```javascript
 var sql = mysql.makeSQLDelete('hs_t',{name:'xc'});
 console.log(sql);//delete from hs_t where name = 'xc';
+//第4个参数同makeSQLSelect
 ```
 
 ###防sql注入  
