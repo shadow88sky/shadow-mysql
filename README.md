@@ -106,7 +106,7 @@ console.log(sql);//update hs_t set name = 'xc' where id = 3;
 ```javascript
 var sql = mysql.makeSQLDelete('hs_t',{name:'xc'});
 console.log(sql);//delete from hs_t where name = 'xc';
-//第4个参数同makeSQLSelect
+//第3个参数同makeSQLSelect
 ```
 
 ###防sql注入  
