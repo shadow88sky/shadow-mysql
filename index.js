@@ -37,12 +37,32 @@ class Pool {
         });
     }
 
+    //pool.query
+    queryAsync(sql) {
+        let self = this;
+        return new Promise((resolve, reject) => {
+            if (!!!self._pool) return console.error('pool is not exists');
+            let tick = new Date();
+            return self._pool.query(sql, (err, rows, fields) => {
+                let now = new Date();
+                let timediff = now.getTime() - tick.getTime();
+                if (err) {
+                    console.error(`[MySQL]Query error,used time:${timediff} ms,error=${err},sql=${sql}`);
+                    reject(err);
+                } else {
+                    //console.log(`[MySQL]Query success,used time:${timediff} ms,sql=${sql}`);
+                    resolve(rows);
+                }
+            });
+        })
+    }
+
     /**
      * pool.getConnection
      * @param name: function name
      */
     getConnection(name, cb) {
-        if (!!!this._pool) return console.error('pool is not exists');
+        if (!!!this._pool) return cb('pool is not exists');
         this._pool.getConnection((err, connection) => {
             let conn = new Connection(connection);
             function releaseError() {
@@ -52,6 +72,23 @@ class Pool {
             conn._timeout = setTimeout(releaseError, 60000);
             cb(err, conn);
         });
+    }
+
+    getConnectionAsync(name) {
+        let self = this;
+        return new Promise((resolve, reject) => {
+            if (!!!self._pool) return reject('pool is not exists');
+            self._pool.getConnection((err, connection) => {
+                if (err) return reject(err);
+                let conn = new Connection(connection);
+                function releaseError() {
+                    console.warn(`connection ${name} release timeout!!!`);
+                }
+                //1分钟仍没关闭句柄，则提示释放链接错误;
+                conn._timeout = setTimeout(releaseError, 60000);
+                resolve(conn);
+            });
+        })
     }
 
     //pool.end
@@ -76,7 +113,7 @@ class Connection {
 
     //connection.query
     query(sql, cb) {
-        if (!!!this._conn) return console.error('connection is not exists');
+        if (!!!this._conn) return cb('connection is not exists');
         let tick = new Date();
         return this._conn.query(sql, function (err, results) {
             let now = new Date();
@@ -88,6 +125,25 @@ class Connection {
             }
             cb(err, results);
         });
+    }
+
+    queryAsnyc(sql) {
+        let self = this;
+        return new Promise((resolve, reject) => {
+            if (!!!self._conn) return reject('connection is not exists');
+            let tick = new Date();
+            return self._conn.query(sql, function (err, results) {
+                let now = new Date();
+                let timediff = now.getTime() - tick.getTime();
+                if (err) {
+                    console.error(`[MySQL]Query error,used time:${timediff} ms,error=${err},sql=${sql}`);
+                    return reject(err);
+                } else {
+                    console.log(`[MySQL]Query success,used time:${timediff} ms,sql=${sql}`);
+                    resolve(results);
+                }
+            });
+        })
     }
 
     //connection.release
@@ -109,6 +165,19 @@ class Connection {
         })
     }
 
+    beginTransactionAsync() {
+        let self = this;
+        return new Promise((resolve, reject) => {
+            if (!!!self._conn) return console.error('connection is not exists');
+            self._conn.beginTransaction(function (err) {
+                if (err) return reject(err);
+                if (self._transCount > 0) return reject('Has Opened A Transaction!');
+                self._transCount++;
+                resolve(null);
+            })
+        })
+    }
+
     //rollback
     rollback() {
         if (this._transCount == 0) return console.error('can not rollback,please open transaction first!');
@@ -123,6 +192,19 @@ class Connection {
         this._conn.commit(function (err) {
             if (err) return cb(err);
             cb(null);
+        })
+    }
+
+    //commit
+    commitAsync() {
+        let self = this;
+        return new Promise((resolve, reject) => {
+            if (self._transCount == 0) return reject('Please open transaction first!');
+            self._transCount--;
+            self._conn.commit(function (err) {
+                if (err) return reject(err);
+                resolve(null);
+            })
         })
     }
 }
