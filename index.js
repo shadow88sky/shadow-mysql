@@ -346,7 +346,7 @@ function makeSQLSelect(table, columns, where, condition) {
     }
     let sql = "SELECT " + col + " FROM " + mysql.escapeId(table) + " WHERE 1=1 ";
     if (where) {
-        sql += " " + convertObjectToSQLStringKV(where, '=', 'and');
+        sql += " AND " + convertObjectToSQLStringKV(where, '=', 'and');
     }
     sql += conditionToSQLString(condition);
     return sql;
