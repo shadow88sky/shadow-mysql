@@ -333,6 +333,8 @@ function makeSQLUpdate(table, items, where, condition) {
     let sql = "UPDATE " + mysql.escapeId(table) + " SET " + convertObjectToSQLStringKV(items, '=', ',');
     if (where) {
         sql += ' WHERE ' + convertObjectToSQLStringKV(where, '=', 'and');
+    }else{
+        sql += ' WHERE 1=1 '
     }
     sql += conditionToSQLString(condition);
     return sql;
@@ -358,6 +360,8 @@ function makeSQLDelete(table, where, condition) {
     let sql = "DELETE FROM " + mysql.escapeId(table)
     if (where) {
         sql += ' WHERE ' + convertObjectToSQLStringKV(where, '=', 'and');
+    }else{
+        sql += ' WHERE 1=1 '
     }
     sql += conditionToSQLString(condition);
     return sql;
