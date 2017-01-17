@@ -127,7 +127,7 @@ class Connection {
         });
     }
 
-    queryAsnyc(sql) {
+    queryAsync(sql) {
         let self = this;
         return new Promise((resolve, reject) => {
             if (!!!self._conn) return reject('connection is not exists');
